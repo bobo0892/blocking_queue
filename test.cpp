@@ -13,44 +13,61 @@ static double getMS(){
 }
 
 using namespace blocking;
-const size_t queueSize = 20;
-
+const size_t queueSize = 10;
 
 template<typename T>
-void put(BlockingQueue<T> &queue){
+void thread1(BlockingQueue<T> &queue){
 	for(int i = 0; i < queueSize; ++i){
 		queue.put(i);
 		std::this_thread::sleep_for(std::chrono::milliseconds(18));
 	}
 }
+
 template<typename T>
-void take(BlockingQueue<T> &queue){
+void thread2(BlockingQueue<T> &queue, BlockingQueue<T>& queue2){
 	int k = 0;
 	while(1){
 	while(queue.size()){
-		queue.take();
-		std::this_thread::sleep_for(std::chrono::milliseconds(32));
+		T front = queue.take();
+		queue2.put(front);
+		std::this_thread::sleep_for(std::chrono::milliseconds(37));
 		k++;
 	}
 	if(k==queueSize) break;}
 }
 
+template<typename T>
+void thread3(BlockingQueue<T>& queue){
+	int k = 0;
+	while(1){
+	while(queue.size()){
+		queue.take();
+		std::this_thread::sleep_for(std::chrono::milliseconds(18));
+		k++;
+	}
+	if(k==queueSize)break;}
+}
+
 int main(int argc, char* argv[]){
 
 	BlockingQueue<int> queue;
+	BlockingQueue<int> queue2;
 
 	double st = getMS();
-	std::thread t1(put<int>,std::ref(queue));
-	std::thread t2(take<int>,std::ref(queue));
+	std::thread t1(thread1<int>,std::ref(queue));
+	std::thread t2(thread2<int>,std::ref(queue),std::ref(queue2));
+	std::thread t3(thread3<int>,std::ref(queue2));
 
 	t1.join();
 	t2.join();
+	t3.join();
 	double et = getMS();
 	std::cout << "Muil threads use time: " << et-st << "ms" << std::endl;
 
 	st = getMS();
-	put(queue);
-	take(queue);
+	thread1(queue);
+	thread2(queue,queue2);
+	thread3(queue2);
 	et = getMS();
 	std::cout << "Single thread use time: " << et-st << "ms" << std::endl;
 

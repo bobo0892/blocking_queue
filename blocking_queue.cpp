@@ -9,7 +9,7 @@ namespace blocking {
 		std::lock_guard<std::mutex> lock(_mutex);
 		_queue.push_back(task);
 		std::cout << "put: " << task << std::endl;
-		_condvar.notify_all();
+		_condvar.notify_all(); 
 	}
 
 	template<typename T>
